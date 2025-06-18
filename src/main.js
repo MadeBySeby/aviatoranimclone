@@ -54,7 +54,7 @@ import { gsap } from "gsap";
   app.stage.addChild(ufcxaviator);
   const loadingContainer = new Container();
   const lineOfTime = new Graphics();
-  lineOfTime.rect(0, 0.1, 0.1, 5).fill("red");
+  lineOfTime.rect(0, 0.1, 0.1, 5).fill("red").round;
   lineOfTime.x = app.screen.width / 2 - ufcxaviator.width / 2 + 20;
   lineOfTime.y = app.screen.height / 2 + ufcxaviator.height / 2 + 20;
   loadingContainer.addChild(lineOfTime);
@@ -62,7 +62,7 @@ import { gsap } from "gsap";
   app.stage.addChild(loadingContainer);
   const lineOfTimeAnim = gsap.from(lineOfTime, {
     // delay: 1,
-    duration: 5,
+    duration: 1,
     width: ufcxaviator.width,
     ease: "none",
     onComplete: () => {
@@ -79,36 +79,62 @@ import { gsap } from "gsap";
           return;
         },
       });
-      // gsap.to(planeLine, {
-      //   x: app.screen.width - 200,
-      //   y: -100,
-      //   duration: 5,
-      //   ease: "power1.out",
-      //   onUpdate: () => {
-      //     // planeLine.x =
-      //     //   app.screen.width - 200 + Math.cos(Date.now() / 1000) * 50;
-      //     // planeLine.width += Math.sin(2 * app.ticker.deltaTime);
-      //   },
-      //   onComplete: () => {
-      //     planeLine.width = 0;
-      //     planeLine.x = 0;
-      //     planeLine.y = app.screen.height - plane0.height / 2;
-      //     return;
-      //   },
-      // });
-      gsap.to(plane0, {
+
+      const planeAnim = gsap.to(plane0, {
         x: app.screen.width - 200,
         y: 100,
         duration: 2,
         ease: "linear",
 
         onUpdate: () => {
+          const planeLeft = plane0.x - plane0.width / 2;
+          const planeRight = plane0.x + plane0.width / 2;
+          const planeTop = plane0.y - plane0.height / 2;
+          const planeBottom = plane0.y + plane0.height / 2;
+          graphics.clear();
+          graphics.moveTo(0, app.screen.height);
+          // graphics.quadraticCurveTo(65, 395, 80, 390); // First wave (smaller)
+          // graphics.quadraticCurveTo(95, 385, 110, 380); // Second wave (smaller)
+          // graphics.quadraticCurveTo(125, 375, 140, 372); // Third wave (smaller)
+          // graphics.quadraticCurveTo(145, 371, 150, 370); // Final curve (smaller)
+          graphics.quadraticCurveTo(
+            plane0.x * 0.3,
+            app.screen.height - 20, // First control point (slight rise)
+            plane0.x - plane0.width / 2,
+            plane0.y + 30 // Second control point (keeps curving out)
+          ); // First wave
+          // graphics.quadraticCurveTo(250, 250, 300, 200); // Second wave
+          // graphics.quadraticCurveTo(350, 150, 400, 120); // Third wave
+          // graphics.quadraticCurveTo(425, 110, 450, 100); // Final curve
+
+          // Close the shape for filling
+          graphics.lineTo(plane0.x, app.screen.height);
+          graphics.lineTo(0, app.screen.height);
+          graphics.y = 0;
+          graphics.x = 0;
+          // Apply fill and stroke
+          graphics.fill({ color: 0xff0000, alpha: 0.5 });
+          // graphics.rotation = Math.PI / 20;
+          // graphics.stroke({ width: 2, color: "white" });
           if (plane0.x >= app.screen.width - 300) {
             gsap.to(plane0, {
               x: app.screen.width - 200,
-              y: 100 - Math.sin(Date.now() / 500) * 50,
-              duration: 1,
+              y: 200 - Math.sin(Math.PI) * 50,
+              duration: 2,
               ease: "linear",
+              onUpdate: () => {
+                graphics.y = plane0.y - 100;
+              },
+              onComplete: () => {
+                plane0.x = 0;
+                plane0.y = app.screen.height - plane0.height / 2;
+                graphics.clear();
+                console.log("Animation complete");
+                planeAnim.kill();
+                app.stage.removeChild(planeContainer);
+                app.stage.addChild(loadingContainer);
+                lineOfTimeAnim.restart();
+              },
             });
           }
         },
@@ -116,18 +142,16 @@ import { gsap } from "gsap";
     },
   });
   const planeContainer = new Container();
-  // const planeLine = new Graphics();
-  // planeLine.moveTo(0, 0);
-  // planeLine.arc(app.screen.width / 2, app.screen.height - 150, 40, Math.PI, 0);
-  // planeLine.stroke({ width: 3, color: 0x00ff00 });
-  // planeLine.x = 0;
-  // planeLine.y = app.screen.height - plane0.height / 2;
-  // planeContainer.addChild(planeLine);
+  const planeLine = new Graphics();
+  const graphics = new Graphics();
+  planeContainer.addChild(graphics);
   const plane0 = Sprite.from("plane-0");
   planeContainer.addChild(plane0);
   plane0.anchor.set(0.5);
   plane0.x = 0;
   plane0.y = app.screen.height - plane0.height / 2;
+  graphics.x = plane0.x;
+  graphics.y = app.screen.height * 0.9;
   // planeContainer.x = 0;
   // planeContainer.y = app.screen.height - plane0.height;
   // plane0.x += plane0.width / 4;
