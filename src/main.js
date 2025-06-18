@@ -62,7 +62,7 @@ import { gsap } from "gsap";
   app.stage.addChild(loadingContainer);
   const lineOfTimeAnim = gsap.from(lineOfTime, {
     // delay: 1,
-    duration: 1,
+    duration: 5,
     width: ufcxaviator.width,
     ease: "none",
     onComplete: () => {
