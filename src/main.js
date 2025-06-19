@@ -5,7 +5,9 @@ import {
   Graphics,
   Container,
   Triangle,
+  Text,
 } from "pixi.js";
+import { io } from "socket.io-client";
 import { gsap } from "gsap";
 (async () => {
   const app = new Application();
@@ -13,6 +15,13 @@ import { gsap } from "gsap";
   await app.init({ background: "black", resizeTo: window });
 
   document.getElementById("pixi-container").appendChild(app.canvas);
+  const URL = "https://mw.artwear.ge";
+  let gameEvents = null;
+  const socket = io(URL, {
+    transports: ["websocket"],
+    secure: true,
+  });
+
   await Assets.load([
     {
       alias: "background",
@@ -39,6 +48,8 @@ import { gsap } from "gsap";
       src: "/assets/ufcxaviator.svg",
     },
   ]);
+  let roundEnd = false;
+  let roundStarted = false;
   const background = Sprite.from("background");
   background.width = app.screen.width;
   background.height = app.screen.height;
@@ -60,6 +71,15 @@ import { gsap } from "gsap";
   loadingContainer.addChild(lineOfTime);
   loadingContainer.addChild(ufcxaviator);
   app.stage.addChild(loadingContainer);
+  const multiplierText = new Text({
+    text: "".toString(),
+    style: {
+      fontSize: 36,
+      fill: "#ffffff",
+      fontFamily: "Arial",
+      align: "center",
+    },
+  });
   const lineOfTimeAnim = gsap.from(lineOfTime, {
     // delay: 1,
     duration: 5,
@@ -74,12 +94,12 @@ import { gsap } from "gsap";
         duration: 5,
         ease: "power1.out",
         onComplete: () => {
-          plane0.x = 0;
-          plane0.y = app.screen.height - plane0.height / 2;
+          // plane0.x = 0;
+          // plane0.y = app.screen.height - plane0.height / 2;
           return;
         },
       });
-
+      if (lineOfTimeAnim.paused()) return;
       const planeAnim = gsap.to(plane0, {
         x: app.screen.width - 200,
         y: 100,
@@ -87,10 +107,10 @@ import { gsap } from "gsap";
         ease: "linear",
 
         onUpdate: () => {
-          const planeLeft = plane0.x - plane0.width / 2;
-          const planeRight = plane0.x + plane0.width / 2;
-          const planeTop = plane0.y - plane0.height / 2;
-          const planeBottom = plane0.y + plane0.height / 2;
+          // const planeLeft = plane0.x - plane0.width / 2;
+          // const planeRight = plane0.x + plane0.width / 2;
+          // const planeTop = plane0.y - plane0.height / 2;
+          // const planeBottom = plane0.y + plane0.height / 2;
           graphics.clear();
           graphics.moveTo(0, app.screen.height);
           // graphics.quadraticCurveTo(65, 395, 80, 390); // First wave (smaller)
@@ -120,28 +140,90 @@ import { gsap } from "gsap";
             gsap.to(plane0, {
               x: app.screen.width - 200,
               y: 200 - Math.sin(Math.PI) * 50,
-              duration: 2,
+              duration: 5,
               ease: "linear",
               onUpdate: () => {
                 graphics.y = plane0.y - 100;
+                if (roundEnd) {
+                  multiplierText.text = "Game Over";
+                  multiplierText.style.fill = "red";
+                  gsap.to(plane0, {
+                    x: app.screen.width * 2,
+                    y: plane0.y,
+                    duration: 1,
+                    ease: "power1.out",
+                    // onComplete: () => {
+                    //   airplane.x = 0;
+                    //   airplane.y = app.screen.height - airplane.height / 2;
+                    //   return;
+                    // },
+                    onComplete: () => {
+                      // gsap.killTweensOf(plane0);
+                      // planeAnim.kill();
+                      plane0.x = 0;
+                      plane0.y = app.screen.height - plane0.height / 2;
+                      graphics.clear();
+                      console.log("Round ended, animation stopped");
+                      app.stage.removeChild(planeContainer);
+                      app.stage.addChild(loadingContainer);
+                      lineOfTimeAnim.play(0);
+                    },
+                  });
+                }
               },
-              onComplete: () => {
-                plane0.x = 0;
-                plane0.y = app.screen.height - plane0.height / 2;
-                graphics.clear();
-                console.log("Animation complete");
-                planeAnim.kill();
-                app.stage.removeChild(planeContainer);
-                app.stage.addChild(loadingContainer);
-                lineOfTimeAnim.restart();
-              },
+
+              // onComplete: () => {
+              //   plane0.x = 0;
+              //   plane0.y = app.screen.height - plane0.height / 2;
+              //   graphics.clear();
+              //   console.log("Animation complete");
+              //   planeAnim.kill();
+              //   app.stage.removeChild(planeContainer);
+              //   app.stage.addChild(loadingContainer);
+              //   lineOfTimeAnim.restart();
+              // },
             });
           }
         },
       });
     },
   });
+  lineOfTimeAnim.pause();
+  // const multiplierText = new Text({
+  //   text: "".toString(),
+  //   style: {
+  //     fontSize: 36,
+  //     fill: "#ffffff",
+  //     fontFamily: "Arial",
+  //     align: "center",
+  //   },
+  // });
+  let countdownStarted = false;
+  multiplierText.x = app.screen.width / 2;
+  multiplierText.y = app.screen.height / 2;
+  socket.on("GAME_EVENTS", (e) => {
+    const parsedData = JSON.parse(e);
+    console.log(parsedData);
+    multiplierText.text = parsedData.multiplier
+      ? parsedData.multiplier.toString()
+      : "";
+    gameEvents = parsedData;
+    if (parsedData.type === "COUNTDOWN") {
+      countdownStarted = true;
+    }
+    if (parsedData.type === "ROUND_END") {
+      console.log(parsedData);
+      roundEnd = true;
+      roundStarted = false;
+    } else if (parsedData.type === "ROUND_START") {
+      countdownStarted = false;
+      roundStarted = true;
+      console.log("Round started");
+      roundEnd = false;
+    }
+  });
   const planeContainer = new Container();
+  planeContainer.addChild(multiplierText);
   const planeLine = new Graphics();
   const graphics = new Graphics();
   planeContainer.addChild(graphics);
@@ -158,6 +240,11 @@ import { gsap } from "gsap";
   plane0.scale.set(1);
   // app.stage.addChild(plane0);
   app.ticker.add((time) => {
+    if (countdownStarted) {
+      lineOfTimeAnim.play();
+    } else {
+      lineOfTimeAnim.progress(0);
+    }
     background.rotation += 0.01 * time.deltaTime;
     // setTimeout(() => {
     //   lineOfTime.width += 0.1 * time.deltaTime;
