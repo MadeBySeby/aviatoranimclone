@@ -9,6 +9,7 @@ import {
 } from "pixi.js";
 import { io } from "socket.io-client";
 import { gsap } from "gsap";
+import { sound } from "@pixi/sound";
 (async () => {
   const app = new Application();
 
@@ -71,6 +72,10 @@ import { gsap } from "gsap";
   loadingContainer.addChild(lineOfTime);
   loadingContainer.addChild(ufcxaviator);
   app.stage.addChild(loadingContainer);
+  sound.add("backgroundSound", "/assets/music/bg_music.mp3");
+  // sound.add("plane-0", "/assets/music/sprite_audio.mp3");
+  const appscreenWidth = app.screen.width;
+  const appscreenHeight = app.screen.height;
   const multiplierText = new Text({
     text: "".toString(),
     style: {
@@ -80,6 +85,11 @@ import { gsap } from "gsap";
       align: "center",
     },
   });
+  sound.play("backgroundSound", {
+    loop: true,
+    volume: 0.5,
+  });
+
   const lineOfTimeAnim = gsap.from(lineOfTime, {
     // delay: 1,
     duration: 0.1,
@@ -89,7 +99,7 @@ import { gsap } from "gsap";
       app.stage.removeChild(loadingContainer);
       app.stage.addChild(planeContainer);
       gsap.to(plane0, {
-        x: app.screen.width * 2,
+        x: appscreenWidth * 2,
         y: plane0.y,
         duration: 5,
         ease: "power1.out",
@@ -101,7 +111,7 @@ import { gsap } from "gsap";
       });
       if (lineOfTimeAnim.paused()) return;
       const planeAnim = gsap.to(plane0, {
-        x: app.screen.width - 200,
+        x: appscreenWidth - 200,
         y: 100,
         duration: 2,
         ease: "linear",
@@ -116,21 +126,21 @@ import { gsap } from "gsap";
           const plane0Width = plane0.width;
           graphics.clear();
 
-          graphics.moveTo(0, app.screen.height);
+          graphics.moveTo(0, appscreenHeight);
           graphics.quadraticCurveTo(
             plane0x * 0.3,
-            app.screen.height - 20,
+            appscreenHeight - 20,
             plane0x - plane0Width / 2,
             plane0y + 30
           );
-          graphics.lineTo(plane0x, app.screen.height);
-          graphics.lineTo(0, app.screen.height);
+          graphics.lineTo(plane0x, appscreenHeight);
+          graphics.lineTo(0, appscreenHeight);
           graphics.fill({ color: 0xff0000, alpha: 0.5 });
 
-          graphics.moveTo(0, app.screen.height);
+          graphics.moveTo(0, appscreenHeight);
           graphics.quadraticCurveTo(
             plane0x * 0.3,
-            app.screen.height - 20,
+            appscreenHeight - 20,
             plane0x - plane0Width / 2,
             plane0y + 30
           );
@@ -139,9 +149,9 @@ import { gsap } from "gsap";
           graphics.y = 0;
           graphics.x = 0;
 
-          if (plane0.x >= app.screen.width - 300) {
+          if (plane0.x >= appscreenWidth - 300) {
             gsap.to(plane0, {
-              x: app.screen.width - 200,
+              x: appscreenWidth - 200,
               y: 200 - Math.sin(Math.PI) * 50,
               duration: 5,
               ease: "linear",
@@ -151,7 +161,7 @@ import { gsap } from "gsap";
                   multiplierText.text = "Game Over";
                   multiplierText.style.fill = "red";
                   gsap.to(plane0, {
-                    x: app.screen.width * 2,
+                    x: appscreenWidth * 2,
                     y: plane0.y,
                     duration: 1,
                     ease: "power1.out",
