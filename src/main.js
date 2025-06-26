@@ -76,10 +76,11 @@ import { sound } from "@pixi/sound";
   // sound.add("plane-0", "/assets/music/sprite_audio.mp3");
   const appscreenWidth = app.screen.width;
   const appscreenHeight = app.screen.height;
+  const baseUnit = appscreenHeight / 100;
   const multiplierText = new Text({
     text: "".toString(),
     style: {
-      fontSize: 36,
+      fontSize: appscreenHeight * 0.05,
       fill: "#ffffff",
       fontFamily: "Arial",
       align: "center",
@@ -93,15 +94,17 @@ import { sound } from "@pixi/sound";
   const lineOfTimeAnim = gsap.from(lineOfTime, {
     // delay: 1,
     duration: 0.1,
+    // duration: 4.9,
     width: ufcxaviator.width,
     ease: "none",
     onComplete: () => {
       app.stage.removeChild(loadingContainer);
-      app.stage.addChild(planeContainer);
+      // app.stage.addChild(planeContainer);
+      app.stage.addChild(bettingContainer);
       gsap.to(plane0, {
         x: appscreenWidth * 2,
         y: plane0.y,
-        duration: 5,
+        duration: 1,
         ease: "power1.out",
         onComplete: () => {
           // plane0.x = 0;
@@ -111,8 +114,8 @@ import { sound } from "@pixi/sound";
       });
       if (lineOfTimeAnim.paused()) return;
       const planeAnim = gsap.to(plane0, {
-        x: appscreenWidth - 200,
-        y: 100,
+        x: appscreenWidth,
+        y: baseUnit * 10,
         duration: 2,
         ease: "linear",
 
@@ -125,13 +128,17 @@ import { sound } from "@pixi/sound";
           const plane0y = plane0.y;
           const plane0Width = plane0.width;
           graphics.clear();
+          const graphicCpx = plane0x * 0.3;
+          const graphicCpy = appscreenHeight + appscreenHeight * 0.1;
+          const graphicquadraticCurveToX = plane0x - plane0Width / 2;
+          const graphicquadraticCurveToY = plane0y + plane0.height / 2;
 
           graphics.moveTo(0, appscreenHeight);
           graphics.quadraticCurveTo(
-            plane0x * 0.3,
-            appscreenHeight - 20,
-            plane0x - plane0Width / 2,
-            plane0y + 30
+            graphicCpx,
+            graphicCpy,
+            graphicquadraticCurveToX,
+            graphicquadraticCurveToY
           );
           graphics.lineTo(plane0x, appscreenHeight);
           graphics.lineTo(0, appscreenHeight);
@@ -139,24 +146,53 @@ import { sound } from "@pixi/sound";
 
           graphics.moveTo(0, appscreenHeight);
           graphics.quadraticCurveTo(
-            plane0x * 0.3,
-            appscreenHeight - 20,
-            plane0x - plane0Width / 2,
-            plane0y + 30
+            graphicCpx,
+            graphicCpy,
+            graphicquadraticCurveToX,
+            graphicquadraticCurveToY
           );
           graphics.stroke({ color: 0xff0000, width: 3 });
 
           graphics.y = 0;
           graphics.x = 0;
 
-          if (plane0.x >= appscreenWidth - 300) {
+          if (plane0.x > appscreenWidth - baseUnit * 19) {
+            // console.log(animDuration);
             gsap.to(plane0, {
-              x: appscreenWidth - 200,
-              y: 200 - Math.sin(Math.PI) * 50,
+              x: appscreenWidth - baseUnit * 19,
+              y: appscreenHeight * 0.6,
               duration: 5,
-              ease: "linear",
+              ease: "back.inOut",
               onUpdate: () => {
-                graphics.y = plane0.y - 100;
+                const graphicCpx2 = plane0.x * 0.3;
+                const graphicCpy2 = appscreenHeight + appscreenHeight * 0.1;
+                const graphicquadraticCurveToX2 = plane0.x - plane0Width / 2;
+                const graphicquadraticCurveToY2 = plane0.y + plane0.height / 2;
+
+                graphics.clear();
+                graphics.moveTo(0, appscreenHeight);
+                graphics.quadraticCurveTo(
+                  graphicCpx2,
+                  graphicCpy2,
+                  graphicquadraticCurveToX2,
+                  graphicquadraticCurveToY2
+                );
+                graphics.lineTo(plane0x, appscreenHeight);
+                graphics.lineTo(0, appscreenHeight);
+                graphics.fill({ color: 0xff0000, alpha: 0.5 });
+
+                graphics.moveTo(0, appscreenHeight);
+                graphics.quadraticCurveTo(
+                  graphicCpx2,
+                  graphicCpy2,
+                  graphicquadraticCurveToX2,
+                  graphicquadraticCurveToY2
+                );
+                graphics.stroke({ color: 0xff0000, width: 3 });
+
+                graphics.y = 0;
+                graphics.x = 0;
+                // graphics.y = plane0y + plane0.height / 2;
                 if (roundEnd) {
                   multiplierText.text = "Game Over";
                   multiplierText.style.fill = "red";
@@ -173,11 +209,15 @@ import { sound } from "@pixi/sound";
                     onComplete: () => {
                       // gsap.killTweensOf(plane0);
                       // planeAnim.kill();
+
                       plane0.x = 0;
                       plane0.y = app.screen.height - plane0.height / 2;
                       graphics.clear();
+                      multiplierText.text = "";
+                      multiplierText.style.fill = "#ffffff";
                       console.log("Round ended, animation stopped");
-                      app.stage.removeChild(planeContainer);
+                      app.stage.removeChild(bettingContainer);
+                      // app.stage.removeChild(multiplierText);
                       app.stage.addChild(loadingContainer);
                       lineOfTimeAnim.play(0);
                     },
@@ -201,6 +241,7 @@ import { sound } from "@pixi/sound";
       });
     },
   });
+  // lineOfTimeAnim.pause();
   lineOfTimeAnim.play();
   // const multiplierText = new Text({
   //   text: "".toString(),
@@ -211,7 +252,9 @@ import { sound } from "@pixi/sound";
   //     align: "center",
   //   },
   // });
+  let animDuration = 0;
   let countdownStarted = false;
+  multiplierText.anchor.set(0.5);
   multiplierText.x = app.screen.width / 2;
   multiplierText.y = app.screen.height / 2;
   socket.on("GAME_EVENTS", (e) => {
@@ -220,10 +263,12 @@ import { sound } from "@pixi/sound";
     multiplierText.text = parsedData.multiplier
       ? parsedData.multiplier.toString()
       : "";
+    animDuration = parsedData.multiplier || 0;
     gameEvents = parsedData;
     if (parsedData.type === "COUNTDOWN") {
       countdownStarted = true;
     }
+
     if (parsedData.type === "ROUND_END") {
       console.log(parsedData);
       roundEnd = true;
@@ -235,8 +280,10 @@ import { sound } from "@pixi/sound";
       roundEnd = false;
     }
   });
+  const bettingContainer = new Container();
   const planeContainer = new Container();
-  planeContainer.addChild(multiplierText);
+
+  // planeContainer.addChild(multiplierText);
   const graphics = new Graphics();
   planeContainer.addChild(graphics);
   const plane0 = Sprite.from("plane-0");
@@ -244,7 +291,8 @@ import { sound } from "@pixi/sound";
   plane0.anchor.set(0.5);
   plane0.x = 0;
   plane0.y = app.screen.height - plane0.height / 2;
-
+  bettingContainer.addChild(planeContainer);
+  bettingContainer.addChild(multiplierText);
   graphics.x = plane0.x;
   graphics.y = app.screen.height * 0.9;
   // planeContainer.x = 0;
@@ -258,7 +306,8 @@ import { sound } from "@pixi/sound";
     // } else {
     //   lineOfTimeAnim.progress(0);
     // }
-    // background.rotation += 0.01 * time.deltaTime;
+    // background.rotation += 0.01 * time.deltaTime * 0.5;
+    //
     // setTimeout(() => {
     //   lineOfTime.width += 0.1 * time.deltaTime;
     //   console.log("s");
