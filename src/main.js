@@ -112,10 +112,10 @@ import { sound } from "@pixi/sound";
       // app.stage.addChild(planeContainer);
       app.stage.addChild(bettingContainer);
 
-      if (lineOfTimeAnim.paused()) return;
+      // if (lineOfTimeAnim.paused()) return;
       const planeAnim = gsap.to(plane0, {
         x: appscreenWidth,
-        y: baseUnit * 10,
+        y: -baseUnit * 10,
         duration: 2,
         ease: "linear",
 
@@ -196,13 +196,14 @@ import { sound } from "@pixi/sound";
                 graphics.x = 0;
                 // graphics.y = plane0y + plane0.height / 2;
                 if (roundEnd) {
-                  // bettingContainer.addChild(gameEndText);
+                  bettingContainer.addChild(gameEndText);
                   gameEndText.anchor.set(0.5);
                   gameEndText.x = multiplierText.x;
                   gameEndText.y =
                     multiplierText.y - multiplierText.height / 2 - 20;
                   multiplierText.style.fill = "red";
                   graphics.clear();
+
                   gsap.to(plane0, {
                     x: appscreenWidth * 2,
                     y: plane0.y,
@@ -214,17 +215,16 @@ import { sound } from "@pixi/sound";
                     //   return;
                     // },
                     onComplete: () => {
-                      // gsap.killTweensOf(plane0);
-                      // planeAnim.kill();
+                      gsap.killTweensOf(plane0);
+                      planeAnim.kill();
 
                       plane0.x = 0;
                       plane0.y = app.screen.height - plane0.height / 2;
                       multiplierText.text = "";
                       multiplierText.style.fill = "#ffffff";
-                      // graphics.clear();
                       bettingContainer.removeChild(gameEndText);
                       app.stage.removeChild(bettingContainer);
-
+                      console.log("Round ended");
                       // app.stage.removeChild(multiplierText);
                       app.stage.addChild(loadingContainer);
                       lineOfTimeAnim.play(0);
@@ -249,7 +249,7 @@ import { sound } from "@pixi/sound";
       });
     },
   });
-  lineOfTimeAnim.pause();
+  // lineOfTimeAnim.pause();
   // const multiplierText = new Text({
   //   text: "".toString(),
   //   style: {
@@ -275,14 +275,14 @@ import { sound } from "@pixi/sound";
     if (parsedData.type === "COUNTDOWN") {
       countdownStarted = true;
     }
-    if (parsedData.type === "TICK") {
-      countdownStarted = false;
-    }
+    // if (parsedData.type === "TICK") {
+    // }
     if (parsedData.type === "ROUND_END") {
       console.log(parsedData);
       roundEnd = true;
       roundStarted = false;
     } else if (parsedData.type === "ROUND_START") {
+      countdownStarted = false;
       roundStarted = true;
       console.log("Round started");
       roundEnd = false;
