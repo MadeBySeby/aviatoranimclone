@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@pixi/core": "^7.4.3",
+    "@pixi/filter-blur": "^7.4.3",
+    "@pixi/filter-godray": "^5.1.1",
     "@pixi/sound": "^6.0.1",
     "gsap": "^3.13.0",
     "netlify-cli": "^22.2.1",
