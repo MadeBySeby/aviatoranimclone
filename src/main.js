@@ -6,6 +6,7 @@ import {
   Container,
   Triangle,
   Text,
+  Texture,
 } from "pixi.js";
 import { io } from "socket.io-client";
 import { gsap } from "gsap";
@@ -49,6 +50,12 @@ import { sound } from "@pixi/sound";
       src: "/assets/ufcxaviator.svg",
     },
   ]);
+  const planeTextures = [
+    Texture.from("plane-0"),
+    Texture.from("plane-1"),
+    Texture.from("plane-2"),
+    Texture.from("plane-3"),
+  ];
   let roundEnd = false;
   let roundStarted = false;
   const background = Sprite.from("background");
@@ -100,11 +107,12 @@ import { sound } from "@pixi/sound";
     loop: true,
     volume: 0.5,
   });
-
+  let currentFrame = 0;
+  const frameSpeed = 0.1;
   const lineOfTimeAnim = gsap.from(lineOfTime, {
     // delay: 1,
-    // duration: 0.1,
-    duration: 4.7,
+    duration: 0.1,
+    // duration: 4.7,
     width: ufcxaviator.width,
     ease: "none",
     onComplete: () => {
@@ -115,8 +123,8 @@ import { sound } from "@pixi/sound";
       // if (lineOfTimeAnim.paused()) return;
       const planeAnim = gsap.to(plane0, {
         x: appscreenWidth,
-        y: -baseUnit * 10,
-        duration: 2,
+        y: -baseUnit * 8,
+        duration: 4,
         ease: "linear",
 
         onUpdate: () => {
@@ -166,12 +174,11 @@ import { sound } from "@pixi/sound";
               yoyo: true,
               ease: "back.inOut",
               onUpdate: () => {
+                graphics.clear();
                 const graphicCpx2 = plane0.x * 0.3;
                 const graphicCpy2 = appscreenHeight + appscreenHeight * 0.1;
                 const graphicquadraticCurveToX2 = plane0.x - plane0Width / 2;
                 const graphicquadraticCurveToY2 = plane0.y + plane0.height / 2;
-
-                graphics.clear();
                 graphics.moveTo(0, appscreenHeight);
                 graphics.quadraticCurveTo(
                   graphicCpx2,
@@ -179,7 +186,7 @@ import { sound } from "@pixi/sound";
                   graphicquadraticCurveToX2,
                   graphicquadraticCurveToY2
                 );
-                graphics.lineTo(plane0x, appscreenHeight);
+                graphics.lineTo(plane0.x, appscreenHeight);
                 graphics.lineTo(0, appscreenHeight);
                 graphics.fill({ color: 0xff0000, alpha: 0.5 });
 
@@ -218,12 +225,14 @@ import { sound } from "@pixi/sound";
                       gsap.killTweensOf(plane0);
                       planeAnim.kill();
 
-                      plane0.x = 0;
+                      plane0.x = plane0.width;
                       plane0.y = app.screen.height - plane0.height / 2;
                       multiplierText.text = "";
                       multiplierText.style.fill = "#ffffff";
                       bettingContainer.removeChild(gameEndText);
-                      app.stage.removeChild(bettingContainer);
+                      graphics.clear();
+                      bettingContainer.removeChild(graphics);
+                      // app.stage.removeChild(bettingContainer);
                       console.log("Round ended");
                       // app.stage.removeChild(multiplierText);
                       app.stage.addChild(loadingContainer);
@@ -247,9 +256,20 @@ import { sound } from "@pixi/sound";
           }
         },
       });
+      const propellerAnimation = gsap.to(
+        {},
+        {
+          duration: frameSpeed,
+          repeat: -1,
+          onRepeat: () => {
+            currentFrame = (currentFrame + 1) % planeTextures.length;
+            plane0.texture = planeTextures[currentFrame];
+          },
+        }
+      );
     },
   });
-  // lineOfTimeAnim.pause();
+  lineOfTimeAnim.play();
   // const multiplierText = new Text({
   //   text: "".toString(),
   //   style: {
@@ -294,7 +314,7 @@ import { sound } from "@pixi/sound";
   // planeContainer.addChild(multiplierText);
   const graphics = new Graphics();
   planeContainer.addChild(graphics);
-  const plane0 = Sprite.from("plane-0");
+  const plane0 = Sprite.from(planeTextures[0]);
   planeContainer.addChild(plane0);
   plane0.anchor.set(0.5);
   plane0.x = 0;
@@ -309,13 +329,12 @@ import { sound } from "@pixi/sound";
   plane0.scale.set(1);
   // app.stage.addChild(plane0);
   app.ticker.add((time) => {
-    if (countdownStarted) {
-      lineOfTimeAnim.play();
-    } else {
-      lineOfTimeAnim.progress(0);
-    }
-    background.rotation += 0.01 * time.deltaTime * 0.5;
-
+    // if (countdownStarted) {
+    //   lineOfTimeAnim.play();
+    // } else {
+    //   lineOfTimeAnim.progress(0);
+    // }
+    // background.rotation += 0.01 * time.deltaTime * 0.5;
     // setTimeout(() => {
     //   lineOfTime.width += 0.1 * time.deltaTime;
     //   console.log("s");
